@@ -17,6 +17,7 @@ export const connectToSocket = (server)=>{ // the connectToSocket are use to con
     }); // Create new Socket.io server instance
 
     io.on("connection", (socket)=>{   // Listen for new client connections
+        console.log("Something connected");
         socket.on("join-call", (path)=>{  // This event triggers when a user joins a call/room
 
             if(connections[path] === undefined){
@@ -24,7 +25,7 @@ export const connectToSocket = (server)=>{ // the connectToSocket are use to con
             }
             connections[path].push(socket.id);
 
-            timeOnline(socket.id) = new Date();
+            timeOnline[socket.id] = new Date();
 
             // also you can write this 
             // connections[path].forEach((elem)=>{
@@ -32,7 +33,7 @@ export const connectToSocket = (server)=>{ // the connectToSocket are use to con
             // })
 
             for (let a = 0; a < connections[path].length; a++){
-                io.to(connections[path][a].emit("user-joined", socket.id, connections[path]));
+                io.to(connections[path][a]).emit("user-joined", socket.id, connections[path]);
             }
 
             if(messages[path] !== undefined){
@@ -64,7 +65,7 @@ export const connectToSocket = (server)=>{ // the connectToSocket are use to con
                 }
 
                 messages[matchingRoom].push({'sender': sender, "data": data, "socket-id-sender": socket.id});
-                // console.log("message", key, ":", sender, data);
+                console.log("message", matchingRoom, ":", sender, data);
 
                 connections[matchingRoom].forEach((elem)=>{
                     io.to(elem).emit("chat-message", data, sender, socket.id);
