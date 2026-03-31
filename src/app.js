@@ -27,7 +27,7 @@ const start = async () => {
     const connectionDb = await mongoose.connect(process.env.MONGO_URL);
     console.log(`MONGO connected DB host : ${connectionDb.connection.host}`);
     server.listen((app.get("port")), () => {
-        console.log(`LISTENING ON PORT NO 8000`);
+        console.log(`LISTENING ON PORT NO ${app.get("port")}`);
     });
 }
 
