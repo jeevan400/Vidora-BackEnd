@@ -2,6 +2,7 @@ import { User } from "../models/user.model.js";
 import httpStatus from "http-status";
 import bcrypt, { hash } from "bcrypt";
 import crypto from "crypto";
+import { Meeting } from "../models/meeting.model.js";
 
 // login controller
 const login = async (req, res) => {
@@ -57,4 +58,52 @@ const register = async (req, res) => {
   }
 };
 
-export { login, register };
+// get history
+const getUserHistory = async(req, res)=>{
+  const {token} = req.query;
+  try{
+    const user = await User.findOne({token: token});
+    const meetings = await Meeting.find({user_id: user.username});
+    res.json(meetings)
+  } catch(e){
+    res.json({message: `Something went wrong ${e}`});
+  }
+}
+
+// add to history
+const addToHistory = async (req, res) => {
+  const {token, meeting_code} = req.body;
+  try{
+    const user = await User.findOne({token: token});
+
+    const newMeeting = new Meeting({
+      user_id: user.username,
+      meetingCode: meeting_code
+    });
+
+    await newMeeting.save();
+    res.status(httpStatus.CREATED).json({message:"Added code to history"})
+  }catch(e){
+    res.json({message: `Something went wrong ${e}`})
+  }
+}
+
+// delete meeting history
+const deleteMeetingHistory = async (req, res) => {
+  try{
+    const { id } = req.params;
+    await Meeting.findByIdAndDelete(id);
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: "Meeting deleted successfully",
+    });
+  } catch(e){
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Error deleting meeting",
+    });
+  }
+}
+
+export { login, register, getUserHistory, addToHistory, deleteMeetingHistory };
