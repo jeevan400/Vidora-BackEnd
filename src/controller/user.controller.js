@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import bcrypt, { hash } from "bcrypt";
 import crypto from "crypto";
 import { Meeting } from "../models/meeting.model.js";
+import jwt from "jsonwebtoken";
 
 // login controller
 const login = async (req, res) => {
@@ -17,18 +18,34 @@ const login = async (req, res) => {
         .status(httpStatus.NOT_FOUND)
         .json({ message: "User Not Found" });
     }
+
+    if(!user.password){
+      return res.status(400).json({message: "Plese complete registration."});
+    }
+
     let isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (isPasswordCorrect) {
-      let token = crypto.randomBytes(20).toString("hex");
+      // let token = crypto.randomBytes(20).toString("hex");
+
+      const token = jwt.sign(
+        {
+          id: user._id,
+          username: user.username,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn:"1d",
+        },
+      );
 
       user.token = token;
       await user.save();
-      return res.status(httpStatus.OK).json({ token: token });
+      return res.status(httpStatus.OK).json({message:"User login Successfully!", token: token });
     } else{
       return res.status(httpStatus.UNAUTHORIZED).json({message: "Invalid Username or password"})
     }
   } catch (e) {
-    return res.status(500).json({ message: `Something went wrong ${e}` });
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message:e.message});
   }
 };
 
